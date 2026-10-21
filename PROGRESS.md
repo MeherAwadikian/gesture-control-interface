@@ -47,3 +47,21 @@ falling back to simulated `pyautogui` media keys if both fail. Verified for
 real: read current system volume (1.0), lowered it by 0.01, read it back
 (0.99), raised it back by 0.01, confirmed it returned to exactly 1.0 — a
 real round-trip through the Windows Core Audio API, not a mock.
+
+## 19:20 — Web companion scaffolded and deployed to Cloudflare
+Built `web-demo/index.html`: a static landing page documenting the gesture
+list, config schema, install steps, and architecture notes, plus a
+genuinely live in-browser hand-landmark visualizer (MediaPipe Hands
+JS/WASM via CDN + `getUserMedia`, no server round-trip) clearly labeled as
+detection-only — explains why the real mouse/click/drag/scroll/volume app
+can't run in a browser (OS-control sandboxing). Deployed as a Cloudflare
+Worker with static assets (not Pages — this account has hit the 100-project
+Pages limit before on this series) via `wrangler deploy`, live at
+https://gesture-control-interface.krikormher.workers.dev — confirmed 200
+and correct HTML served via curl.
+
+## 19:25 — Pushed to GitHub, done
+Source pushed to https://github.com/MeherAwadikian/gesture-control-interface
+(public) via `gh repo create --source=. --push`. All 34 unit tests passing,
+real camera+MediaPipe smoke test passing, real pycaw volume round-trip
+confirmed, web companion live. Task complete.
