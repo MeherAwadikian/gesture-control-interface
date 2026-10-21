@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gesture-Controlled Computer Interface</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #121822;
+    --text: #e7edf3;
+    --muted: #9fb0c0;
+    --accent: #4fd1a5;
+    --accent2: #5aa7ff;
+    --border: #223040;
+    --warn: #e6b450;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f6f8fa;
+      --panel: #ffffff;
+      --text: #10161c;
+      --muted: #4a5a68;
+      --accent: #0e9f6e;
+      --accent2: #2563eb;
+      --border: #dfe6ec;
+      --warn: #a66a00;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b0f14; --panel: #121822; --text: #e7edf3; --muted: #9fb0c0;
+    --accent: #4fd1a5; --accent2: #5aa7ff; --border: #223040; --warn: #e6b450;
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f8fa; --panel: #ffffff; --text: #10161c; --muted: #4a5a68;
+    --accent: #0e9f6e; --accent2: #2563eb; --border: #dfe6ec; --warn: #a66a00;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 80px; }
+  header { margin-bottom: 28px; }
+  h1 { font-size: 1.9rem; margin: 0 0 8px; }
+  .sub { color: var(--muted); font-size: 1.05rem; margin: 0; }
+  .badge {
+    display: inline-block; font-size: 0.75rem; padding: 3px 9px; border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    margin-bottom: 14px; letter-spacing: 0.02em;
+  }
+  section { margin: 34px 0; }
+  h2 { font-size: 1.3rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .notice {
+    background: color-mix(in srgb, var(--warn) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+    border-radius: 10px; padding: 14px 16px; color: var(--text); font-size: 0.95rem;
+  }
+  .notice strong { color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+  th { color: var(--muted); font-weight: 600; }
+  code, pre {
+    background: color-mix(in srgb, var(--panel) 85%, var(--border) 15%);
+    border-radius: 6px; font-size: 0.85rem;
+  }
+  code { padding: 2px 6px; }
+  pre { padding: 14px 16px; overflow-x: auto; border: 1px solid var(--border); }
+  a { color: var(--accent2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+
+  #videoWrap { position: relative; width: 100%; max-width: 640px; aspect-ratio: 4/3; background: #000; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  #video, #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  #video { object-fit: cover; transform: scaleX(-1); }
+  #overlay { transform: scaleX(-1); }
+  .controls { margin: 12px 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  button {
+    background: var(--accent2); color: #fff; border: none; border-radius: 8px;
+    padding: 9px 16px; font-size: 0.95rem; cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #status { color: var(--muted); font-size: 0.9rem; }
+  footer { color: var(--muted); font-size: 0.85rem; margin-top: 50px; border-top: 1px solid var(--border); padding-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="badge">Task Forge · Puzzle #185</div>
+  <h1>Gesture-Controlled Computer Interface</h1>
+  <p class="sub">A local Python desktop app that turns webcam hand gestures into real mouse, click, drag, scroll, and system-volume control.</p>
+</header>
+
+<section>
+  <div class="notice">
+    <strong>This page is a landmark-detection demo only.</strong> The hand
+    tracking below runs for real, live, in your browser (MediaPipe Hands
+    WASM build + your webcam via <code>getUserMedia</code> — nothing is sent
+    to a server). It draws landmarks exactly like the real app does. It does
+    <strong>not</strong> move your mouse, click anything, scroll, or change
+    your volume — browsers are deliberately sandboxed from controlling the
+    OS cursor or system audio for security reasons, and Cloudflare
+    Pages/Workers have no webcam or OS access at all. The full
+    mouse/click/drag/scroll/volume control app is a local Python program —
+    see install instructions below.
+  </div>
+</section>
+
+<section>
+  <h2>Live hand-landmark visualizer</h2>
+  <div id="videoWrap">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+  </div>
+  <div class="controls">
+    <button id="startBtn">Start camera</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <span id="status">Camera not started.</span>
+  </div>
+</section>
+
+<section>
+  <h2>Gestures (the real Python app)</h2>
+  <div class="card">
+    <table>
+      <tr><th>Gesture</th><th>Shape</th><th>Action</th></tr>
+      <tr><td>POINT</td><td>index finger only extended</td><td>move OS cursor</td></tr>
+      <tr><td>PINCH (quick)</td><td>thumb tip touches index tip, released fast with little movement</td><td>click</td></tr>
+      <tr><td>PINCH (held/moved)</td><td>same pinch, held longer or moved further</td><td>click-and-drag</td></tr>
+      <tr><td>TWO_FINGER</td><td>index + middle extended, moved vertically</td><td>scroll</td></tr>
+      <tr><td>THUMBS_UP</td><td>only thumb extended, pointing up</td><td>system volume up</td></tr>
+      <tr><td>THUMBS_DOWN</td><td>only thumb extended, pointing down</td><td>system volume down</td></tr>
+      <tr><td>FIST</td><td>all fingers curled</td><td>neutral/idle — no action, by design</td></tr>
+      <tr><td>OPEN_PALM</td><td>all 5 fingers extended</td><td>detected, intentionally left unmapped</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Install &amp; run the real app locally</h2>
+  <div class="card">
+<pre><code>git clone https://github.com/MeherAwadikian/gesture-control-interface.git
+cd gesture-control-interface
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python main.py</code></pre>
+    <p>Press <code>g</code> to toggle gesture control on/off, <code>q</code> to exit safely (releases any held mouse button and closes the webcam).</p>
+  </div>
+</section>
+
+<section>
+  <h2><code>gesture_config.json</code> schema</h2>
+  <div class="card">
+<pre><code>{
+  "camera_index": 0,
+  "frame_width": 640,
+  "frame_height": 480,
+  "max_hands": 2,
+  "mediapipe": {
+    "min_detection_confidence": 0.7,
+    "min_tracking_confidence": 0.6
+  },
+  "frame_margin": 0.15,
+  "smoothing_factor": 0.5,
+  "debounce_frames": 6,
+  "pinch_threshold": 0.045,
+  "click_max_duration_sec": 0.3,
+  "click_max_movement_px": 15,
+  "scroll_sensitivity_px_per_tick": 40,
+  "scroll_ticks_per_event": 2,
+  "volume_step": 0.05,
+  "toggle_key": "g",
+  "exit_key": "q"
+}</code></pre>
+  </div>
+</section>
+
+<section>
+  <h2>Architecture notes</h2>
+  <div class="grid2">
+    <div class="card">
+      <strong>Debounce</strong>
+      <p class="sub">A raw per-frame gesture guess is noisy. A <code>StabilityTracker</code> only "confirms" a gesture after it repeats for N consecutive frames (~0.2-0.4s), and flags the single frame it newly became confirmed — so discrete actions (like a volume step) fire once per gesture, not once per frame.</p>
+    </div>
+    <div class="card">
+      <strong>Smoothing</strong>
+      <p class="sub">An exponential moving average smooths the mapped cursor position across frames before it's sent to the OS, cutting landmark jitter.</p>
+    </div>
+    <div class="card">
+      <strong>Click vs. drag</strong>
+      <p class="sub">Mouse-down fires on pinch-start, mouse-up on release — exactly how a real mouse button distinguishes a click from a drag, by hold duration and movement, with no separate "fire a click" special case needed.</p>
+    </div>
+    <div class="card">
+      <strong>Real system volume</strong>
+      <p class="sub">Uses <code>pycaw</code> (Windows Core Audio Endpoint Volume API) for direct volume control, with an honest fallback to simulated media keys if pycaw/COM isn't available — the app reports which backend is actually active rather than claiming real control it doesn't have.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Source: <a href="https://github.com/MeherAwadikian/gesture-control-interface" target="_blank" rel="noopener">github.com/MeherAwadikian/gesture-control-interface</a>
+  — this demo page only runs the detection/drawing layer in-browser; the mouse/click/drag/scroll/volume control app is a local Python program (see above).
+</footer>
+
+</div>
+
+<script type="module">
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('overlay');
+  const ctx = canvas.getContext('2d');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const statusEl = document.getElementById('status');
+
+  let stream = null;
+  let hands = null;
+  let rafId = null;
+  let mpReady = false;
+
+  async function loadMediaPipe() {
+    if (mpReady) return;
+    statusEl.textContent = 'Loading MediaPipe Hands…';
+    await import('https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js');
+    await import('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1675466124/drawing_utils.js');
+    mpReady = true;
+  }
+
+  function resizeCanvas() {
+    canvas.width = video.clientWidth;
+    canvas.height = video.clientHeight;
+  }
+
+  async function start() {
+    try {
+      await loadMediaPipe();
+      stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+      video.srcObject = stream;
+      await video.play();
+      resizeCanvas();
+
+      // eslint-disable-next-line no-undef
+      hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`,
+      });
+      hands.setOptions({
+        maxNumHands: 2,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.6,
+      });
+      hands.onResults(onResults);
+
+      statusEl.textContent = 'Camera running — showing live landmark detection.';
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      loop();
+    } catch (err) {
+      statusEl.textContent = 'Could not access camera: ' + err.message;
+    }
+  }
+
+  async function loop() {
+    if (!stream) return;
+    await hands.send({ image: video });
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function onResults(results) {
+    resizeCanvas();
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (results.multiHandLandmarks) {
+      for (const landmarks of results.multiHandLandmarks) {
+        // eslint-disable-next-line no-undef
+        drawConnectors(ctx, landmarks, Hands.HAND_CONNECTIONS, { color: '#4fd1a5', lineWidth: 3 });
+        // eslint-disable-next-line no-undef
+        drawLandmarks(ctx, landmarks, { color: '#5aa7ff', lineWidth: 1, radius: 3 });
+      }
+    }
+    ctx.restore();
+  }
+
+  function stop() {
+    if (rafId) cancelAnimationFrame(rafId);
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    statusEl.textContent = 'Camera stopped.';
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+  }
+
+  startBtn.addEventListener('click', start);
+  stopBtn.addEventListener('click', stop);
+  window.addEventListener('resize', resizeCanvas);
+</script>
+</body>
+</html>

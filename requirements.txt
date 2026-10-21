@@ -1,0 +1,11 @@
+# mediapipe>=1.0 removed the legacy `mediapipe.solutions` Hands API in favor
+# of the new Tasks API (mediapipe.tasks.python.vision.HandLandmarker) and
+# also no longer ships wheels for Python 3.13+ as of this writing. This app
+# uses the classic `solutions.hands` API (matches the puzzle's documented
+# landmark-index model directly), so mediapipe is pinned below 1.0 and
+# requires Python <=3.12 (tested on 3.11).
+opencv-python>=4.9.0
+mediapipe==0.10.21
+pyautogui>=0.9.54
+pycaw>=20230407; platform_system == "Windows"
+comtypes>=1.2.0; platform_system == "Windows"
